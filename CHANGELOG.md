@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.4
+
+- Starts the local Codex TUI client from the home directory while keeping the remote thread attached to its project workspace. This avoids local config refreshes probing macOS-protected Desktop/Documents project paths.
+
 ## 0.8.3
 
 - Adds the latest DMG/ZIP release links to the top of the README.

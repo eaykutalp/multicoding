@@ -117,7 +117,11 @@ final class CodexManager: ObservableObject {
             publish(id, decoded)
         }
         Task { await refreshUsage() }
-        let command = "codex resume --remote \(Git.quote(endpoint)) --remote-auth-token-env MULTICODING_CODEX_TOKEN --no-alt-screen \(Git.quote(id))"
+        // The remote app-server owns the thread's workspace CWD (supplied to
+        // thread/start above). Launch the local TUI client from HOME so its config
+        // refresh does not probe macOS-protected project folders such as Desktop.
+        // Keep this in a subshell so the terminal itself remains in the project.
+        let command = "(cd \(Git.quote(NSHomeDirectory())) && codex resume --remote \(Git.quote(endpoint)) --remote-auth-token-env MULTICODING_CODEX_TOKEN --no-alt-screen \(Git.quote(id)))"
         return (id, command)
     }
 
