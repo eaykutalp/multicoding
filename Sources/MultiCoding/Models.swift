@@ -265,7 +265,6 @@ enum Persistence {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         // A beta build (./build.sh --beta) keeps its own workspace next to the release one.
         let dir = base.appendingPathComponent(Persistence.isBeta ? "MultiCoding Beta" : "MultiCoding", isDirectory: true)
-        LegacyCompatibility.copySupportDirectoryIfNeeded(base: base, destination: dir, isBeta: Persistence.isBeta)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }()

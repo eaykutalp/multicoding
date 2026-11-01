@@ -253,7 +253,7 @@ final class Store: ObservableObject {
             env["MULTICODING_CODEX_TOKEN"] = CodexManager.shared.connection(for: tab.id).token
         }
         if let worktree = tab.worktree {
-            LegacyCompatibility.setRepositoryEnvironment(&env, repository: worktree.repo)
+            env["MULTICODING_REPO"] = worktree.repo
         }
 
         view.startProcess(

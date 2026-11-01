@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.7
+
+- Removes leftover compatibility code for the former internal app name.
+- Updates the README with the current feature set and app screenshot.
+
 ## 0.8.6
 
 - Fixes Codex remote session resume when the project setting to skip permission prompts is enabled. Remote resume no longer passes an unsupported CLI permission override.

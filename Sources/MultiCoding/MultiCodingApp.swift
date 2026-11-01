@@ -7,7 +7,6 @@ struct MultiCodingApp: App {
     @StateObject private var store = Store.shared
 
     init() {
-        Prefs.importLegacySettings()
         Prefs.importReleaseSettingsIfBeta()
     }
 
@@ -51,10 +50,6 @@ enum Prefs {
     static let all = [confirmQuit, showFolderPath, sidebarWidth, usageInterval, theme, autoResume, showFiles, filesByDate,
                       filesBrowserCollapsed, previewWrapLines, panelTab, fontFamily, fontSize,
                       notifyNeedsYou, notifyDone, notifyPrograms, notifyStyle, notifySound, welcomed]
-
-    static func importLegacySettings() {
-        LegacyCompatibility.importPreferences(keys: all, isBeta: Persistence.isBeta)
-    }
 
     /// A beta build (./build.sh --beta) starts out with the release app's settings, such as
     /// the theme and font, instead of the defaults. Only on its first launch.
