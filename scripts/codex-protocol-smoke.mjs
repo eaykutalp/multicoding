@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
-const home = mkdtempSync(join(tmpdir(), 'omux-codex-smoke-'));
+const home = mkdtempSync(join(tmpdir(), 'multicoding-codex-smoke-'));
 const sockets = [];
 let child;
 let calls = 0;
@@ -23,12 +23,12 @@ const model = createServer(async (req, res) => {
   const body = JSON.parse(data);
   toolNames = (body.tools ?? []).flatMap(t => t.tools?.map(x => x.name) ?? [t.name]);
   calls++;
-  const id = `omux-response-${calls}`;
+  const id = `multicoding-response-${calls}`;
   const item = calls % 2 === 1
-    ? { type: 'function_call', id: 'fc_omux', call_id: 'call_omux', name: 'exec_command',
-        arguments: JSON.stringify({cmd: 'echo omux-approval-smoke', sandbox_permissions: 'require_escalated', justification: 'Omux local approval integration test'}) }
-    : { type: 'message', id: 'msg_omux', role: 'assistant', status: 'completed',
-        content: [{type: 'output_text', text: 'Omux local test complete.', annotations: []}] };
+    ? { type: 'function_call', id: 'fc_multicoding', call_id: 'call_multicoding', name: 'exec_command',
+        arguments: JSON.stringify({cmd: 'echo multicoding-approval-smoke', sandbox_permissions: 'require_escalated', justification: 'MultiCoding local approval integration test'}) }
+    : { type: 'message', id: 'msg_multicoding', role: 'assistant', status: 'completed',
+        content: [{type: 'output_text', text: 'MultiCoding local test complete.', annotations: []}] };
   res.writeHead(200, {'content-type': 'text/event-stream'});
   const event = (type, extra) => res.write(`event: ${type}\ndata: ${JSON.stringify({type, ...extra})}\n\n`);
   event('response.created', {response: {id, status: 'in_progress'}});
@@ -115,10 +115,10 @@ function authenticatedSocket(endpoint, token) {
 try {
   await new Promise(resolve => model.listen(0, '127.0.0.1', resolve));
   const fakePort = model.address().port;
-  writeFileSync(join(home, 'config.toml'), `model_provider = "omux_local_test"
+  writeFileSync(join(home, 'config.toml'), `model_provider = "multicoding_local_test"
 model = "gpt-6.1-sol"
-[model_providers.omux_local_test]
-name = "Omux local test"
+[model_providers.multicoding_local_test]
+name = "MultiCoding local test"
 base_url = "http://127.0.0.1:${fakePort}/v1"
 wire_api = "responses"
 requires_openai_auth = false
@@ -138,11 +138,11 @@ supports_websockets = false
   let errors = '';
   child.stderr.on('data', bytes => { errors = (errors + bytes).slice(-4000); });
   await waitFor(() => errors.includes('listening on:'), 'server startup');
-  const a = await client(endpoint, token, 'omux_native_smoke');
-  const b = await client(endpoint, token, 'omux_tui_protocol_smoke');
+  const a = await client(endpoint, token, 'multicoding_native_smoke');
+  const b = await client(endpoint, token, 'multicoding_tui_protocol_smoke');
   const first = await a.request('thread/start', {cwd:home, approvalPolicy:'on-request', sandbox:'read-only'});
   const id = first.thread.id;
-  await a.request('thread/name/set', {threadId:id,name:'Omux local smoke'});
+  await a.request('thread/name/set', {threadId:id,name:'MultiCoding local smoke'});
   const resumed = await b.request('thread/resume', {threadId:id,excludeTurns:true});
   assert.equal(resumed.thread.id, id);
   await b.request('turn/start', {threadId:id,input:[{type:'text',text:'Run the local approval test.'}]});
@@ -155,7 +155,7 @@ supports_websockets = false
   const completed = await waitFor(() => a.events.find(e=>e.method==='turn/completed'), 'turn completion');
   assert.equal(completed.params.turn.status,'completed');
   const items = await a.request('thread/items/list',{threadId:id,limit:100,sortDirection:'asc'});
-  assert.ok(items.data.some(row=>row.item.type==='commandExecution' && row.item.aggregatedOutput?.includes('omux-approval-smoke')));
+  assert.ok(items.data.some(row=>row.item.type==='commandExecution' && row.item.aggregatedOutput?.includes('multicoding-approval-smoke')));
   a.events.length=0; b.events.length=0;
   await b.request('turn/start', {threadId:id,input:[{type:'text',text:'Run the second local approval test.'}]});
   const denied = await waitFor(() => a.events.find(e=>e.method==='item/commandExecution/requestApproval'), 'second approval');
@@ -169,7 +169,7 @@ supports_websockets = false
   const interrupted=await waitFor(() => b.events.find(e=>e.method==='turn/completed'), 'interrupted turn');
   assert.equal(interrupted.params.turn.status,'interrupted');
   const tui = spawn('python3',[fileURLToPath(new URL('./codex-tui-smoke.py',import.meta.url)),endpoint,id],
-    {env:{...env,OMUX_CODEX_TOKEN:token},stdio:['ignore','pipe','pipe']});
+    {env:{...env,MULTICODING_CODEX_TOKEN:token},stdio:['ignore','pipe','pipe']});
   let tuiOutput='';
   tui.stdout.on('data',b=>{tuiOutput+=b;});
   tui.stderr.on('data',b=>{tuiOutput+=b;});

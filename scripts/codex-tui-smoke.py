@@ -15,7 +15,7 @@ master, slave = pty.openpty()
 fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack('HHHH', 40, 140, 0, 0))
 env = dict(os.environ, TERM='xterm-256color')
 child = subprocess.Popen(['codex', 'resume', '--remote', endpoint,
-                          '--remote-auth-token-env', 'OMUX_CODEX_TOKEN',
+                          '--remote-auth-token-env', 'MULTICODING_CODEX_TOKEN',
                           '--no-alt-screen', thread_id],
                          stdin=slave, stdout=slave, stderr=slave,
                          env=env, start_new_session=True)
@@ -49,7 +49,7 @@ finally:
     os.close(master)
 
 text = output.decode('utf-8', errors='replace')
-if 'gpt-6.1-sol' not in text.lower() or 'Omux local smoke' not in text:
+if 'gpt-6.1-sol' not in text.lower() or 'MultiCoding local smoke' not in text:
     print(text[-4000:])
     sys.exit(1)
 print('PASS: real Codex TUI attached to the saved thread with the private bearer token.')

@@ -1,10 +1,10 @@
 #!/bin/sh
 
-# Antigravity sends the active conversation as JSON on stdin. omux supplies a
-# per-terminal OMUX_TAB_ID so multiple tabs in one workspace do not collide.
+# Antigravity sends the active conversation as JSON on stdin. MultiCoding supplies
+# a per-terminal tab ID so multiple sessions in one workspace do not collide.
 payload=$(/bin/cat)
-tab_id=${OMUX_TAB_ID:-}
-dir="$HOME/Library/Application Support/omux/antigravity-conversations"
+tab_id=${MULTICODING_TAB_ID:-${OMUX_TAB_ID:-}}
+dir="$HOME/Library/Application Support/MultiCoding/antigravity-conversations"
 /bin/mkdir -p "$dir"
 usage_tmp=$(/usr/bin/mktemp "$dir/.usage.XXXXXX") || exit 1
 /usr/bin/printf '%s' "$payload" > "$usage_tmp"

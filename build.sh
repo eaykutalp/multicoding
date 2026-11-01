@@ -34,7 +34,7 @@ swift build -c release 2>&1 | grep -E "error|warning: unre|Compiling|Build compl
 APP="build/$NAME.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp .build/release/omux "$APP/Contents/MacOS/omux"
+cp .build/release/MultiCoding "$APP/Contents/MacOS/MultiCoding"
 cp Info.plist "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_ID" -c "Set :CFBundleName $NAME" -c "Set :CFBundleDisplayName $NAME" \
   -c "Set :NSServices:0:NSMenuItem:default Open in $NAME" -c "Set :NSServices:0:NSPortName $NAME" "$APP/Contents/Info.plist"

@@ -8,8 +8,8 @@ MultiCoding has no telemetry. Its integrations use these network paths:
 
 Local files MultiCoding touches:
 
-- `~/Library/Application Support/omux/workspace.json`: your projects and sessions (plus a `.bak` copy).
+- `~/Library/Application Support/MultiCoding/workspace.json`: your projects and sessions (plus a `.bak` copy). On upgrade, MultiCoding copies the previous app's workspace into this folder and leaves the original intact.
 - `~/.claude/projects`: read to list recent conversations, to check whether a session's conversation exists, and to show a running session's subagents and their transcripts.
 - Worktree sessions run `git` in your repository, and creating a pull request runs `git push` through your login shell. Nothing else is pushed or committed unless you confirm it.
-- Elements picked in the browser are saved under your temporary folder (`omux-picks`) so Claude can read them.
+- Elements picked in the browser are saved under your temporary folder (`MultiCoding-picks`) so Claude can read them.
 - Settings are stored in the standard macOS preferences.
