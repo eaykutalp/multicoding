@@ -520,6 +520,8 @@ final class Store: ObservableObject {
     /// Starts the selected provider in an idle shell or resumes its exact saved chat.
     func start(_ id: UUID) {
         guard let loc = location(of: id), pendingCommands[id] == nil, !codexStopping.contains(id) else { return }
+        // Play on a background row should also bring that session's terminal into view.
+        selectedTabID = id
         let tab = groups[loc.group].tabs[loc.tab]
         // The Codex App Server token is injected into the shell when its terminal is
         // created. After Stop closes that server, Play must create a fresh shell too;

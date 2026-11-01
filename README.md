@@ -1,5 +1,7 @@
 # MultiCoding
 
+[Download the latest release](https://github.com/eaykutalp/multicoding/releases/latest) · [DMG](https://github.com/eaykutalp/multicoding/releases/latest/download/MultiCoding-0.8.3.dmg) · [ZIP](https://github.com/eaykutalp/multicoding/releases/latest/download/MultiCoding-0.8.3.zip)
+
 **Claude Code, Codex and Antigravity sessions in one native macOS app.**
 
 MultiCoding gives each project a sidebar of terminal sessions. See which agents are working or waiting, resume the same conversations, and manage parallel work from one place.

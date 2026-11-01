@@ -8,15 +8,54 @@ struct CodexAgents: View {
     @State private var open = false
 
     private var agents: [CodexAgent] { manager.agents[tabID] ?? [] }
+    private var approvals: [CodexApproval] {
+        manager.pendingApprovals(for: tabID).filter { $0.threadID != manager.thread(for: tabID) }
+    }
 
     var body: some View {
-        if !agents.isEmpty {
+        if !agents.isEmpty || !approvals.isEmpty {
             if compact {
-                Button { open.toggle() } label: {
-                    Label("\(agents.filter { !$0.finished }.count) agents", systemImage: "person.2")
+                VStack(alignment: .leading, spacing: 5) {
+                    if !agents.isEmpty {
+                        Button { open.toggle() } label: {
+                            Label("\(agents.filter { !$0.finished }.count) agents", systemImage: "person.2")
+                        }
+                        .popover(isPresented: $open) { rows.padding(10).frame(width: 320) }
+                    }
+                    approvalRows
                 }
-                .popover(isPresented: $open) { rows.padding(10).frame(width: 320) }
-            } else { rows }
+            } else {
+                VStack(alignment: .leading, spacing: 5) {
+                    rows
+                    approvalRows
+                }
+            }
+        }
+    }
+
+    private var approvalRows: some View {
+        ForEach(approvals) { approval in
+            VStack(alignment: .leading, spacing: 5) {
+                Label("Agent needs approval", systemImage: "hand.raised.fill")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.orange)
+                Text(approval.detail)
+                    .font(.system(.caption2, design: .monospaced))
+                    .lineLimit(3)
+                    .textSelection(.enabled)
+                HStack(spacing: 6) {
+                    Button("Allow") { store.answerPermission(tabID, allow: true, codexApproval: approval) }
+                        .tint(.green)
+                    Button("Deny") { store.answerPermission(tabID, allow: false, codexApproval: approval) }
+                        .tint(.red)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.mini)
+                .disabled(manager.answering.contains(approval))
+            }
+            .padding(7)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.orange.opacity(0.09), in: RoundedRectangle(cornerRadius: 7))
         }
     }
 

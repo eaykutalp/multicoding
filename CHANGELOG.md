@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.3
+
+- Adds the latest DMG/ZIP release links to the top of the README.
+- Selecting Play on a session now selects and reveals its terminal.
+- Shows Codex root and subagent permission requests under their session with per-request Allow/Deny actions.
+- Updates Codex resume commands to use the MultiCoding token environment variable (fixes the stale 0.8.0 command when the app is updated).
+
 ## 0.8.2
 
 - Consolidates previous-install session, preference and worktree-command migration in one compatibility file.
