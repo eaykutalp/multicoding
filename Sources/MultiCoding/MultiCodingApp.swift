@@ -53,14 +53,7 @@ enum Prefs {
                       notifyNeedsYou, notifyDone, notifyPrograms, notifyStyle, notifySound, welcomed]
 
     static func importLegacySettings() {
-        let flag = "importedOmuxSettings"
-        guard Bundle.main.bundleIdentifier?.hasPrefix("com.emreaykutalp.multicoding") == true,
-              !UserDefaults.standard.bool(forKey: flag),
-              let legacy = UserDefaults(suiteName: Persistence.isBeta ? "net.pf1.omux.beta" : "net.pf1.omux") else { return }
-        for key in all where UserDefaults.standard.object(forKey: key) == nil {
-            if let value = legacy.object(forKey: key) { UserDefaults.standard.set(value, forKey: key) }
-        }
-        UserDefaults.standard.set(true, forKey: flag)
+        LegacyCompatibility.importPreferences(keys: all, isBeta: Persistence.isBeta)
     }
 
     /// A beta build (./build.sh --beta) starts out with the release app's settings, such as

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.2
+
+- Consolidates previous-install session, preference and worktree-command migration in one compatibility file.
+- Uses MultiCoding names throughout source, tests, resources and user-facing docs.
+
 ## 0.8.1
 
 - Renamed the Swift package, app target, source and test folders to MultiCoding.

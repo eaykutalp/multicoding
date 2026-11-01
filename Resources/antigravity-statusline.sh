@@ -3,7 +3,7 @@
 # Antigravity sends the active conversation as JSON on stdin. MultiCoding supplies
 # a per-terminal tab ID so multiple sessions in one workspace do not collide.
 payload=$(/bin/cat)
-tab_id=${MULTICODING_TAB_ID:-${OMUX_TAB_ID:-}}
+tab_id=${MULTICODING_TAB_ID:-}
 dir="$HOME/Library/Application Support/MultiCoding/antigravity-conversations"
 /bin/mkdir -p "$dir"
 usage_tmp=$(/usr/bin/mktemp "$dir/.usage.XXXXXX") || exit 1

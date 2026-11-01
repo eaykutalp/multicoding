@@ -216,7 +216,7 @@ enum Persistence {
     static let directory: URL = {
         // Development smoke tests can use disposable state without opening or
         // replacing the user's real workspace.
-        if let path = ProcessInfo.processInfo.environment["MULTICODING_WORKSPACE_DIRECTORY"] ?? ProcessInfo.processInfo.environment["OMUX_WORKSPACE_DIRECTORY"], !path.isEmpty {
+        if let path = ProcessInfo.processInfo.environment["MULTICODING_WORKSPACE_DIRECTORY"], !path.isEmpty {
             let dir = URL(fileURLWithPath: path, isDirectory: true)
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             return dir
@@ -224,12 +224,7 @@ enum Persistence {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         // A beta build (./build.sh --beta) keeps its own workspace next to the release one.
         let dir = base.appendingPathComponent(Persistence.isBeta ? "MultiCoding Beta" : "MultiCoding", isDirectory: true)
-        let legacyDir = base.appendingPathComponent(Persistence.isBeta ? "omux-beta" : "omux", isDirectory: true)
-        if !FileManager.default.fileExists(atPath: dir.path),
-           FileManager.default.fileExists(atPath: legacyDir.path) {
-            // Keep existing sessions/settings when moving from the original app name.
-            try? FileManager.default.copyItem(at: legacyDir, to: dir)
-        }
+        LegacyCompatibility.copySupportDirectoryIfNeeded(base: base, destination: dir, isBeta: Persistence.isBeta)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }()

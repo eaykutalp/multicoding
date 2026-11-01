@@ -245,10 +245,8 @@ final class Store: ObservableObject {
         if provider == .codex {
             env["MULTICODING_CODEX_TOKEN"] = CodexManager.shared.connection(for: tab.id).token
         }
-        // Lets a worktree setup reach the main checkout. Keep the old key for saved commands.
         if let worktree = tab.worktree {
-            env["MULTICODING_REPO"] = worktree.repo
-            env["OMUX_REPO"] = worktree.repo
+            LegacyCompatibility.setRepositoryEnvironment(&env, repository: worktree.repo)
         }
 
         view.startProcess(

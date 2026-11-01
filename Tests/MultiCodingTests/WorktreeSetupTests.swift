@@ -9,7 +9,7 @@ final class WorktreeSetupTests: XCTestCase {
 
     /// "x; && claude" and "x & && claude" are parse errors: neither the setup nor the session ran.
     func testTrailingSeparatorsStillParse() {
-        XCTAssertEqual(Store.afterSetup("cp \"$OMUX_REPO/.env\" .;", "claude"), "cp \"$OMUX_REPO/.env\" . && claude")
+        XCTAssertEqual(Store.afterSetup("cp \"$MULTICODING_REPO/.env\" .;", "claude"), "cp \"$MULTICODING_REPO/.env\" . && claude")
         XCTAssertEqual(Store.afterSetup("npm i ; ; ", "claude"), "npm i && claude")
         XCTAssertEqual(Store.afterSetup("npm run dev &", "claude"), "npm run dev & claude")
         XCTAssertEqual(Store.afterSetup("a && b", "claude"), "a && b && claude")
