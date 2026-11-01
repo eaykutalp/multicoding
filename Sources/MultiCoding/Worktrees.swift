@@ -287,7 +287,7 @@ struct WorktreeSheet: View {
     private func load() async {
         provider = store.newWorktreeProvider
         store.newWorktreeProvider = nil
-        name = "Session \((group?.tabs.count ?? 0) + 1)"
+        name = SessionNaming.nextName(in: group?.tabs ?? [])
         guard let dir = group?.directory.map({ ($0 as NSString).expandingTildeInPath }) else { loaded = true; return }
         let info = await Task.detached { () -> (String?, [String], String?) in
             guard let repo = Git.topLevel(dir) else { return (nil, [], nil) }

@@ -82,7 +82,8 @@ final class CodexManager: ObservableObject {
         return connection
     }
 
-    func prepare(tabID: UUID, threadID: String?, cwd: String, name: String) async throws -> (threadID: String, command: String) {
+    func prepare(tabID: UUID, threadID: String?, cwd: String, name: String,
+                 skipPermissionPrompts: Bool) async throws -> (threadID: String, command: String) {
         let connection = connection(for: tabID)
         if let previous = retiring[tabID] {
             try await previous.value
@@ -91,11 +92,15 @@ final class CodexManager: ObservableObject {
         }
         try await connection.connect()
         try Task.checkCancellation()
+        let permissions: [String: Any] = [
+            "approvalPolicy": skipPermissionPrompts ? "never" : "on-request",
+            "sandbox": skipPermissionPrompts ? "danger-full-access" : "workspace-write",
+        ]
         let response: [String: Any]
         if let threadID {
-            response = try await connection.request("thread/resume", params: ["threadId": threadID, "excludeTurns": false])
+            response = try await connection.request("thread/resume", params: ["threadId": threadID, "excludeTurns": false].merging(permissions) { _, new in new })
         } else {
-            response = try await connection.request("thread/start", params: ["cwd": cwd])
+            response = try await connection.request("thread/start", params: ["cwd": cwd].merging(permissions) { _, new in new })
         }
         guard let thread = response["thread"] as? [String: Any], let id = thread["id"] as? String,
               let endpoint = connection.endpoint else { throw CodexError.server("Codex didn't return a conversation ID") }
@@ -121,7 +126,8 @@ final class CodexManager: ObservableObject {
         // thread/start above). Launch the local TUI client from HOME so its config
         // refresh does not probe macOS-protected project folders such as Desktop.
         // Keep this in a subshell so the terminal itself remains in the project.
-        let command = "(cd \(Git.quote(NSHomeDirectory())) && codex resume --remote \(Git.quote(endpoint)) --remote-auth-token-env MULTICODING_CODEX_TOKEN --no-alt-screen \(Git.quote(id)))"
+        let bypass = skipPermissionPrompts ? "--dangerously-bypass-approvals-and-sandbox " : ""
+        let command = "(cd \(Git.quote(NSHomeDirectory())) && codex \(bypass)resume --remote \(Git.quote(endpoint)) --remote-auth-token-env MULTICODING_CODEX_TOKEN --no-alt-screen \(Git.quote(id)))"
         return (id, command)
     }
 

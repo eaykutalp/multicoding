@@ -198,6 +198,7 @@ struct GroupEditSheet: View {
     @State private var name = ""
     @State private var directory = ""
     @State private var useWorktrees = false
+    @State private var skipAgentPermissionPrompts = false
     @State private var worktreeSetup = ""
 
     var body: some View {
@@ -209,6 +210,11 @@ struct GroupEditSheet: View {
                 Button("Choose…") { if let dir = chooseDirectory(current: directory) { directory = dir } }
             }
             Toggle("Give new sessions their own Git worktree", isOn: $useWorktrees)
+            Toggle("Skip permission prompts for all agents", isOn: $skipAgentPermissionPrompts)
+            Text("Lets Claude Code, Codex and Antigravity run tools without asking. Codex also runs without its sandbox. Takes effect when sessions start or restart.")
+                .font(.caption)
+                .foregroundStyle(.orange)
+                .fixedSize(horizontal: false, vertical: true)
             TextField("Worktree setup", text: $worktreeSetup, prompt: Text("cp \"$MULTICODING_REPO/.env\" . && npm install"))
                 .font(.system(.body, design: .monospaced))
             Text(WorktreeSetupHint.text)
@@ -227,6 +233,7 @@ struct GroupEditSheet: View {
             name = group.name
             directory = group.directory ?? ""
             useWorktrees = group.useWorktrees
+            skipAgentPermissionPrompts = group.skipAgentPermissionPrompts
             worktreeSetup = group.worktreeSetup
         }
     }
@@ -236,6 +243,7 @@ struct GroupEditSheet: View {
             group.name = name.trimmingCharacters(in: .whitespaces).isEmpty ? group.name : name
             group.directory = directory.isEmpty ? nil : directory
             group.useWorktrees = useWorktrees
+            group.skipAgentPermissionPrompts = skipAgentPermissionPrompts
             group.worktreeSetup = worktreeSetup.trimmingCharacters(in: .whitespacesAndNewlines)
         }
         dismiss()

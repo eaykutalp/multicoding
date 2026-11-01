@@ -118,6 +118,8 @@ struct TabGroup: Identifiable, Codable, Hashable {
     var isCollapsed = false
     /// New sessions get their own git worktree.
     var useWorktrees = false
+    /// Start supported agents without interactive permission prompts.
+    var skipAgentPermissionPrompts = false
     /// Runs in each new worktree before the session's command, e.g. to copy ignored
     /// files like `.env` or install dependencies. Empty runs nothing.
     var worktreeSetup = ""
@@ -138,8 +140,47 @@ struct TabGroup: Identifiable, Codable, Hashable {
         provider = (try? c.decodeIfPresent(SessionProvider.self, forKey: .provider)) ?? SessionProvider.infer(command: command)
         isCollapsed = try c.decodeIfPresent(Bool.self, forKey: .isCollapsed) ?? false
         useWorktrees = try c.decodeIfPresent(Bool.self, forKey: .useWorktrees) ?? false
+        skipAgentPermissionPrompts = try c.decodeIfPresent(Bool.self, forKey: .skipAgentPermissionPrompts) ?? false
         worktreeSetup = try c.decodeIfPresent(String.self, forKey: .worktreeSetup) ?? ""
         tabs = try c.decodeIfPresent([TabItem].self, forKey: .tabs) ?? []
+    }
+}
+
+enum SessionNaming {
+    static func number(in name: String) -> Int? {
+        guard name.hasPrefix("Session "),
+              let value = Int(name.dropFirst("Session ".count)), value > 0 else { return nil }
+        return value
+    }
+
+    static func nextName(in tabs: [TabItem]) -> String {
+        let used = Set(tabs.map { $0.name.lowercased() })
+        var number = max(tabs.compactMap { self.number(in: $0.name) }.max() ?? 0, tabs.count) + 1
+        while used.contains("session \(number)".lowercased()) { number += 1 }
+        return "Session \(number)"
+    }
+
+    /// Renames only duplicate app-generated names. User-chosen names are kept as-is.
+    static func repairDuplicates(in group: inout TabGroup) -> Bool {
+        var used = Set(group.tabs.filter { !$0.autoName || !TabItem.isDefaultName($0.name) }
+            .map { $0.name.lowercased() })
+        var changed = false
+        for index in group.tabs.indices where group.tabs[index].autoName && TabItem.isDefaultName(group.tabs[index].name) {
+            var name = group.tabs[index].name
+            if used.contains(name.lowercased()) {
+                name = nextName(in: group.tabs)
+                group.tabs[index].name = name
+                changed = true
+            }
+            used.insert(name.lowercased())
+        }
+        return changed
+    }
+
+    static func uniquifyGeneratedName(_ tab: inout TabItem, among existing: [TabItem]) {
+        guard tab.autoName, TabItem.isDefaultName(tab.name),
+              existing.contains(where: { $0.name.localizedCaseInsensitiveCompare(tab.name) == .orderedSame }) else { return }
+        tab.name = nextName(in: existing)
     }
 }
 

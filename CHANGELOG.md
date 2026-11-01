@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.5
+
+- Generates unique session numbers per project, repairs duplicate app-generated names on launch and covers standard, recent and worktree session creation.
+- Adds a project setting to skip permission prompts for Claude Code, Codex and Antigravity. Codex uses `never` approvals with `danger-full-access`; the setting is off by default.
+
 ## 0.8.4
 
 - Starts the local Codex TUI client from the home directory while keeping the remote thread attached to its project workspace. This avoids local config refreshes probing macOS-protected Desktop/Documents project paths.

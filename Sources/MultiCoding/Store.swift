@@ -67,6 +67,10 @@ final class Store: ObservableObject {
         if groups.isEmpty {
             groups = [TabGroup(name: "Default", tabs: [TabItem(name: "Session 1")])]
         }
+        var repairedSessionNames = false
+        for index in groups.indices {
+            repairedSessionNames = SessionNaming.repairDuplicates(in: &groups[index]) || repairedSessionNames
+        }
         // A session keeps the provider and command it was created with. Project defaults
         // apply only to newly created sessions; changing them must not turn an old tab into
         // a different agent when Play/Continue is pressed.
@@ -93,6 +97,9 @@ final class Store: ObservableObject {
             selectedTabID = sel
         } else {
             selectedTabID = groups.first(where: { !$0.tabs.isEmpty })?.tabs.first?.id
+        }
+        if repairedSessionNames {
+            Persistence.save(Workspace(groups: groups, selectedTabID: selectedTabID))
         }
 
         $groups.dropFirst()
@@ -276,7 +283,7 @@ final class Store: ObservableObject {
         }
 
         if provider == .codex, command == nil {
-            startCodex(view, tab: tab, cwd: dir)
+            startCodex(view, tab: tab, cwd: dir, skipPermissionPrompts: group.skipAgentPermissionPrompts)
         } else if let command = command ?? startupCommand(tab: tab, group: group), !command.isEmpty {
             let token = UUID()
             pendingCommands[tab.id] = token
@@ -287,7 +294,7 @@ final class Store: ObservableObject {
         }
     }
 
-    private func startCodex(_ view: TermView, tab: TabItem, cwd: String) {
+    private func startCodex(_ view: TermView, tab: TabItem, cwd: String, skipPermissionPrompts: Bool) {
         guard codexStarts[tab.id] == nil else { return }
         update(tab.id) { $0.busy = true; $0.statusState = .working; $0.statusDetail = "Connecting to Codex…" }
         codexStarts[tab.id] = Task { [weak self, weak view] in
@@ -295,7 +302,9 @@ final class Store: ObservableObject {
                 if let self, let view, self.terminals[tab.id] === view { self.codexStarts[tab.id] = nil }
             }
             do {
-                let launch = try await CodexManager.shared.prepare(tabID: tab.id, threadID: tab.codexThreadID, cwd: cwd, name: tab.name)
+                let launch = try await CodexManager.shared.prepare(tabID: tab.id, threadID: tab.codexThreadID,
+                                                                  cwd: cwd, name: tab.name,
+                                                                  skipPermissionPrompts: skipPermissionPrompts)
                 try Task.checkCancellation()
                 guard let self, let view, self.terminals[tab.id] === view else { return }
                 self.updateTab(tab.id) { $0.codexThreadID = launch.threadID }
@@ -539,7 +548,8 @@ final class Store: ObservableObject {
         if tab.resolvedProvider(in: groups[loc.group]) != .claude {
             if let view = terminals[id], !(runtime[id]?.exited ?? true) {
                 if provider(of: tab) == .codex {
-                    startCodex(view, tab: tab, cwd: runtime[id]?.cwd ?? directory(of: tab) ?? NSHomeDirectory())
+                    startCodex(view, tab: tab, cwd: runtime[id]?.cwd ?? directory(of: tab) ?? NSHomeDirectory(),
+                               skipPermissionPrompts: groups[loc.group].skipAgentPermissionPrompts)
                 } else if let command = startupCommand(tab: tab, group: groups[loc.group]), !command.isEmpty {
                     view.send(txt: command + "\n")
                 }
@@ -569,17 +579,29 @@ final class Store: ObservableObject {
         guard !raw.isEmpty else { return nil }
         if tab.resolvedProvider(in: group) == .gemini {
             let command = raw == "gemini" ? "agy" : raw
-            if let id = tab.antigravityConversationID, command == "agy" { return "agy --conversation \(id)" }
+            let resumed = if let id = tab.antigravityConversationID, command == "agy" { "agy --conversation \(id)" } else { command }
             // Never guess the workspace's latest conversation when a tab has no ID.
-            return command
+            return Self.withPermissionBypass(resumed, provider: .gemini, enabled: group.skipAgentPermissionPrompts)
         }
         if tab.resolvedProvider(in: group) == .codex, raw == "codex",
            let threadID = tab.codexThreadID {
-            return "codex resume \(Git.quote(threadID))"
+            let bypass = group.skipAgentPermissionPrompts ? "--dangerously-bypass-approvals-and-sandbox " : ""
+            return "codex \(bypass)resume \(Git.quote(threadID))"
         }
         guard tab.resolvedProvider(in: group) == .claude else { return raw }
         let session = tab.claudeSessionID.uuidString.lowercased()
-        return SessionProvider.claudeCommand(raw, sessionID: tab.claudeSessionID, conversationExists: Self.claudeSessionExists(session))
+        let command = SessionProvider.claudeCommand(raw, sessionID: tab.claudeSessionID, conversationExists: Self.claudeSessionExists(session))
+        return Self.withPermissionBypass(command, provider: .claude, enabled: group.skipAgentPermissionPrompts)
+    }
+
+    private static func withPermissionBypass(_ command: String, provider: SessionProvider, enabled: Bool) -> String {
+        guard enabled else { return command }
+        let flag: String
+        switch provider {
+        case .claude, .gemini: flag = "--dangerously-skip-permissions"
+        default: return command
+        }
+        return command.contains(flag) ? command : "\(command) \(flag)"
     }
 
     /// Claude Code writes each conversation to ~/.claude/projects/<project>/<session>.jsonl.
@@ -627,10 +649,7 @@ final class Store: ObservableObject {
         tab.provider = .claude
         tab.command = "claude"
         tab.claudeSessionID = recent.id
-        groups[gi].tabs.append(tab)
-        groups[gi].isCollapsed = false
-        makeTerminal(tab: tab, group: groups[gi])
-        selectedTabID = tab.id
+        addSession(tab, to: groups[gi].id)
     }
 
     func openAntigravitySession(_ recent: AntigravityConversation) {
@@ -790,7 +809,7 @@ final class Store: ObservableObject {
             newWorktreeGroupID = groups[gi].id
             return
         }
-        var tab = TabItem(name: "Session \(groups[gi].tabs.count + 1)", command: command)
+        var tab = TabItem(name: SessionNaming.nextName(in: groups[gi].tabs), command: command)
         tab.provider = SessionProvider.infer(command: command)
         groups[gi].tabs.append(tab)
         groups[gi].isCollapsed = false
@@ -802,6 +821,8 @@ final class Store: ObservableObject {
     /// session's command, which only starts if it succeeds.
     func addSession(_ tab: TabItem, to groupID: UUID, setup: String? = nil) {
         guard let gi = groups.firstIndex(where: { $0.id == groupID }) else { return }
+        var tab = tab
+        SessionNaming.uniquifyGeneratedName(&tab, among: groups[gi].tabs)
         groups[gi].tabs.append(tab)
         groups[gi].isCollapsed = false
         var command: String?
