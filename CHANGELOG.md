@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.6
+
+- Fixes Codex remote session resume when the project setting to skip permission prompts is enabled. Remote resume no longer passes an unsupported CLI permission override.
+
 ## 0.8.5
 
 - Generates unique session numbers per project, repairs duplicate app-generated names on launch and covers standard, recent and worktree session creation.

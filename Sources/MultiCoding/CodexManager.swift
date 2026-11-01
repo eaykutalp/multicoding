@@ -126,8 +126,10 @@ final class CodexManager: ObservableObject {
         // thread/start above). Launch the local TUI client from HOME so its config
         // refresh does not probe macOS-protected project folders such as Desktop.
         // Keep this in a subshell so the terminal itself remains in the project.
-        let bypass = skipPermissionPrompts ? "--dangerously-bypass-approvals-and-sandbox " : ""
-        let command = "(cd \(Git.quote(NSHomeDirectory())) && codex \(bypass)resume --remote \(Git.quote(endpoint)) --remote-auth-token-env MULTICODING_CODEX_TOKEN --no-alt-screen \(Git.quote(id)))"
+        // Codex rejects CLI permission overrides on `resume --remote`. The app-server
+        // applies the project policy when creating the thread; remote resume keeps the
+        // thread's existing policy and must not repeat the override on the CLI.
+        let command = "(cd \(Git.quote(NSHomeDirectory())) && codex resume --remote \(Git.quote(endpoint)) --remote-auth-token-env MULTICODING_CODEX_TOKEN --no-alt-screen \(Git.quote(id)))"
         return (id, command)
     }
 
