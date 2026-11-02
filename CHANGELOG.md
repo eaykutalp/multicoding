@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.9
+
+- Keeps the Dock attention badge in sync and marks blocked sessions when you leave the app or switch sessions, even if they began waiting while selected.
+
 ## 0.8.8
 
 - Repairs stale Antigravity statusline paths from earlier app bundles while preserving custom statusline commands. Antigravity conversation IDs can now be collected again for exact session resume.

@@ -16,6 +16,10 @@ final class Store: ObservableObject {
             // Deferred: this fires inside the List's selection update.
             guard let id = selectedTabID else { return }
             DispatchQueue.main.async { [weak self] in
+                if let previous = oldValue, previous != id,
+                   self?.runtime[previous]?.statusState == .blocked {
+                    self?.requestAttention(previous)
+                }
                 self?.clearAttention(id)
                 self?.refreshBusy(id)
             }
@@ -25,6 +29,7 @@ final class Store: ObservableObject {
         didSet {
             let count = runtime.values.filter(\.needsAttention).count
             NSApp.dockTile.badgeLabel = count > 0 ? "\(count)" : nil
+            NSApp.dockTile.display()
         }
     }
     @Published var renamingID: UUID?
@@ -118,6 +123,9 @@ final class Store: ObservableObject {
             DispatchQueue.main.async {
                 if let id = Store.shared.selectedTabID { Store.shared.clearAttention(id) }
             }
+        }
+        NotificationCenter.default.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { _ in
+            DispatchQueue.main.async { Store.shared.markWaitingSessionsForAttention() }
         }
 
         CodexManager.shared.onStatus = { [weak self] id, status in
@@ -788,6 +796,14 @@ final class Store: ObservableObject {
         // A late result for a closed tab would leave a badge nothing can clear.
         guard tab(id) != nil else { return }
         if !isWatching(id) { update(id) { $0.needsAttention = true } }
+    }
+
+    /// If an agent became blocked while its terminal was visible, mark it when the user
+    /// leaves the app so the Dock badge and one-shot bounce still call them back.
+    private func markWaitingSessionsForAttention() {
+        for (id, status) in runtime where status.statusState == .blocked {
+            requestAttention(id)
+        }
     }
 
     private func clearAttention(_ id: UUID) {
