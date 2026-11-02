@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.8
+
+- Repairs stale Antigravity statusline paths from earlier app bundles while preserving custom statusline commands. Antigravity conversation IDs can now be collected again for exact session resume.
+- Bounces the Dock icon once when an unattended session newly needs attention; the existing badge count remains.
+
 ## 0.8.7
 
 - Removes leftover compatibility code for the former internal app name.

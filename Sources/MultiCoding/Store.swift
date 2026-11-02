@@ -351,7 +351,7 @@ final class Store: ObservableObject {
     }
 
     /// Antigravity exposes the exact conversation ID through its documented statusline JSON.
-    /// Install a collector only when the user has not configured a custom statusline.
+    /// Preserve custom commands, but refresh a collector path left behind by an older app bundle.
     private static func configureAntigravityStatusLine() {
         guard let script = Bundle.main.url(forResource: "antigravity-statusline", withExtension: "sh") else { return }
         let settingsURL = URL(fileURLWithPath: NSHomeDirectory())
@@ -362,7 +362,13 @@ final class Store: ObservableObject {
            let existing = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] {
             settings = existing
         }
-        if let status = settings["statusLine"] as? [String: Any], status["command"] != nil { return }
+        if let status = settings["statusLine"] as? [String: Any],
+           let configured = status["command"] as? String {
+            let oldCommand = URL(fileURLWithPath: configured)
+            let isBundledCollector = oldCommand.lastPathComponent == script.lastPathComponent
+                && configured.contains(".app/Contents/Resources/")
+            if !isBundledCollector || configured == script.path { return }
+        }
         settings["statusLine"] = [
             "type": "command",
             "command": script.path,
@@ -793,6 +799,10 @@ final class Store: ObservableObject {
         var value = runtime[id] ?? TabRuntime()
         let before = value
         mutate(&value)
+        if !before.needsAttention && value.needsAttention {
+            // Match Terminal's Dock behavior when an unattended session needs input.
+            _ = NSApp.requestUserAttention(.informationalRequest)
+        }
         if value != before { runtime[id] = value }
     }
 
