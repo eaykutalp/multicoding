@@ -98,7 +98,7 @@ final class CodexManager: ObservableObject {
         ]
         let response: [String: Any]
         if let threadID {
-            response = try await connection.request("thread/resume", params: ["threadId": threadID, "excludeTurns": false].merging(permissions) { _, new in new })
+            response = try await connection.request("thread/resume", params: ["threadId": threadID, "excludeTurns": true].merging(permissions) { _, new in new })
         } else {
             response = try await connection.request("thread/start", params: ["cwd": cwd].merging(permissions) { _, new in new })
         }
@@ -488,7 +488,7 @@ final class CodexManager: ObservableObject {
                     for attempt in 0..<5 {
                         guard agentOwners[id] == owner, connections[owner] === connection else { return }
                         do {
-                            let response = try await connection.request("thread/resume", params: ["threadId": id, "excludeTurns": false])
+                            let response = try await connection.request("thread/resume", params: ["threadId": id, "excludeTurns": true])
                             guard agentOwners[id] == owner, connections[owner] === connection else { return }
                             if let thread = response["thread"] as? [String: Any] {
                                 synchronizeAgent(thread, owner: owner)

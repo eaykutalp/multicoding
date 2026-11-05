@@ -1,6 +1,6 @@
 # MultiCoding
 
-[Download the latest release](https://github.com/eaykutalp/multicoding/releases/latest) · [DMG](https://github.com/eaykutalp/multicoding/releases/latest/download/MultiCoding-0.8.9.dmg) · [ZIP](https://github.com/eaykutalp/multicoding/releases/latest/download/MultiCoding-0.8.9.zip)
+[Download the latest release](https://github.com/eaykutalp/multicoding/releases/latest) · [DMG](https://github.com/eaykutalp/multicoding/releases/latest/download/MultiCoding-0.8.10.dmg) · [ZIP](https://github.com/eaykutalp/multicoding/releases/latest/download/MultiCoding-0.8.10.zip)
 
 **Claude Code, Codex and Antigravity sessions in one native macOS app.**
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.10
+
+- Fix resuming long Codex conversations by avoiding full history downloads during management requests.
+- Increase the Codex WebSocket message limit for large responses.
+
 ## 0.8.9
 
 - Keeps the Dock attention badge in sync and marks blocked sessions when you leave the app or switch sessions, even if they began waiting while selected.

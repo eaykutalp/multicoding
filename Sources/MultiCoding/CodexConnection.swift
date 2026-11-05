@@ -123,6 +123,8 @@ final class CodexConnection {
             var request = URLRequest(url: URL(string: endpoint)!)
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let socket = URLSession.shared.webSocketTask(with: request)
+            // Long conversation responses can exceed URLSession’s default message limit.
+            socket.maximumMessageSize = 64 * 1024 * 1024
             self.socket = socket
             socket.resume()
             reader = Task { [weak self] in
